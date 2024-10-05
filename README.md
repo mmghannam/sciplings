@@ -20,7 +20,7 @@ currently, the following presets are available:
 by default presets is set to `d,h,s,p`.
 
 ## Usage as a library
-You can also use this project as a library. To do so, add the following to your `Cargo.toml`:
+You can also use this project as a library.
 
 ```rust
 use sciplings::{Solver, Presets};

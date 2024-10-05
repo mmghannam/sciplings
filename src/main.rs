@@ -1,6 +1,5 @@
-use sciplings::Preset;
-use clap::{ArgMatches, Command, CommandFactory, Error, FromArgMatches, Parser};
-use sciplings::MainModel;
+use sciplings::{Preset, Solver};
+use clap::{FromArgMatches, Parser};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -11,7 +10,7 @@ struct Args {
 
 fn parse_presets_input(input: String) -> Vec<Preset> {
     let mut presets = Vec::new();
-    for preset in input.split('-') {
+    for preset in input.split(',') {
         match preset {
             "h" => presets.push(Preset::HeuristicsFocus),
             "s" => presets.push(Preset::SeparatingFocus),
@@ -25,7 +24,7 @@ fn parse_presets_input(input: String) -> Vec<Preset> {
 
 fn main() {
     let args = Args::parse();
-    let mut model = MainModel::new(args.instance_path);
+    let mut solver = Solver::new(args.instance_path);
     let presets = parse_presets_input(args.presets_input.unwrap());
-    model.solve(presets);
+    solver.solve(presets);
 }

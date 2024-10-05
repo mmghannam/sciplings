@@ -10,7 +10,7 @@ use scipling::Scipling;
 use russcip::ffi;
 
 
-pub struct MainModel {
+pub struct Solver {
     ticks: usize,
     global_primal_bound: Arc<RwLock<f64>>,
     global_dual_bound: Arc<RwLock<f64>>,
@@ -19,7 +19,7 @@ pub struct MainModel {
 }
 
 
-impl MainModel {
+impl Solver {
     pub fn new(instance_path: String) -> Self {
         Self {
             ticks: 0,

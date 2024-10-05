@@ -49,12 +49,14 @@ impl MainModel {
                         unsafe {
                             let scip_ptr = model.scip_ptr();
                             ffi::SCIPsetHeuristics(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,0);
+                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_FEASIBILITY, 0);
                         }
                     }
                     Preset::SeparatingFocus => {
                         unsafe {
                             let scip_ptr = model.scip_ptr();
                             ffi::SCIPsetSeparating(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,0);
+                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_OPTIMALITY, 0);
                         }
                     }
                     Preset::Default => {}

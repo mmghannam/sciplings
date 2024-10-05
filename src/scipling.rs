@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex, RwLock};
-use russcip::{EventMask, Solving, WithSolvingStats};
+use russcip::{EventMask, ffi, Solving, WithSolvingStats};
 
 pub(crate) struct Scipling {
     id: usize,
@@ -44,6 +44,11 @@ impl russcip::Eventhdlr for Scipling {
         // println!("Scipling {} bound: {}", self.id, new_bound);
         if new_primal < *self.primal_bound.read().unwrap() {
             self.primal_bound.write().unwrap().clone_from(&new_primal);
+        } else if new_primal > *self.primal_bound.read().unwrap() {
+            unsafe {
+                let scip_ptr = self.model.scip_ptr();
+                ffi::SCIPsetObjlimit(scip_ptr, new_primal);
+            }
         }
 
 

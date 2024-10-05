@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-russcip = { path= "../russcip" , features = ["bundled", "raw"] }
+russcip = { path= "../russcip" , features = ["raw"] }
+scip-sys = { version = "0.1.13" }
 rayon = "1.10.0"
 clap = { version = "4.5.19", features = ["derive"] }

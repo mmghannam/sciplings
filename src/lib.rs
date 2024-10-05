@@ -1,9 +1,13 @@
 pub mod scipling;
+pub mod presets;
+pub use presets::Preset;
 
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
 use scipling::Scipling;
+use russcip::ffi;
+
 
 pub struct MainModel {
     ticks: usize,
@@ -26,19 +30,42 @@ impl MainModel {
     }
 
 
-    pub fn solve(&mut self, n_solvers: usize) {
-        for i in 0..n_solvers {
+    pub fn solve(&mut self, presets: Vec<Preset>) {
+        for (i, preset) in presets.into_iter().enumerate() {
             let instance_path = self.instance_path.clone();
             let global_primal_bound = self.global_primal_bound.clone();
             let global_dual_bound = self.global_dual_bound.clone();
             let should_run = Arc::new(RwLock::new(true));
             self.controls.push(should_run.clone());
             rayon::spawn(move || {
-                let model = russcip::Model::new()
+                let mut model = russcip::Model::new()
                     .include_default_plugins()
                     .read_prob(instance_path.as_str()).unwrap()
                     .hide_output()
                     .set_int_param("randomization/permutationseed", i as i32).unwrap();
+
+                match preset.clone() {
+                    Preset::HeuristicsFocus => {
+                        unsafe {
+                            let scip_ptr = model.scip_ptr();
+                            ffi::SCIPsetHeuristics(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,0);
+                        }
+                    }
+                    Preset::SeparatingFocus => {
+                        unsafe {
+                            let scip_ptr = model.scip_ptr();
+                            ffi::SCIPsetSeparating(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,0);
+                        }
+                    }
+                    Preset::Default => {}
+                    Preset::PseudoCostBranching => {
+                        model = model.set_int_param("branching/pscost/priority", 10000000).unwrap();
+                    }
+                    Preset::SettingsFile(path) => {
+                        todo!()
+                    }
+                }
+
                 let should_run = Arc::new(RwLock::new(true));
                 let scipling = Scipling::new(i, model.clone_for_plugins(), global_primal_bound.clone(), global_dual_bound, should_run);
                 model.include_eventhdlr(
@@ -59,8 +86,16 @@ impl MainModel {
             let gap = primal_bound - dual_bound;
             let rel_gap = gap / primal_bound;
             // self.controls.iter().for_each(|c| *c.write().unwrap() = true);
-            println!("{:.2}s | bounds: [{:.2}, {:.2}] | rel_gap: {:.2}%",
-                     self.ticks as f64 / 100.0, primal_bound, dual_bound, rel_gap * 100.0);
+            let primal_bound = match primal_bound {
+                f if f > 1000000000000.0 => "inf".to_string(),
+                f => format!("{:.2}", f),
+            };
+            let dual_bound = match dual_bound {
+                f if f < -1000000000000.0 => "-inf".to_string(),
+                f => format!("{:.2}", f),
+            };
+            println!("{:.2}s | bounds: [{}, {}] | rel_gap: {:.2}%",
+                     self.ticks as f64 / 100.0,  dual_bound, primal_bound, rel_gap * 100.0);
 
             if rel_gap < 1e-6 {
                 break;

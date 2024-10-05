@@ -1,5 +1,6 @@
 pub mod scipling;
 pub mod presets;
+
 pub use presets::Preset;
 
 use std::sync::{Arc, RwLock};
@@ -48,14 +49,14 @@ impl MainModel {
                     Preset::HeuristicsFocus => {
                         unsafe {
                             let scip_ptr = model.scip_ptr();
-                            ffi::SCIPsetHeuristics(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,0);
+                            ffi::SCIPsetHeuristics(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 0);
                             ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_FEASIBILITY, 0);
                         }
                     }
                     Preset::SeparatingFocus => {
                         unsafe {
                             let scip_ptr = model.scip_ptr();
-                            ffi::SCIPsetSeparating(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,0);
+                            ffi::SCIPsetSeparating(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 0);
                             ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_OPTIMALITY, 0);
                         }
                     }
@@ -78,6 +79,7 @@ impl MainModel {
             });
         }
 
+        let mut prev_gap = f64::INFINITY;
         loop {
             self.ticks += 1;
 
@@ -87,17 +89,23 @@ impl MainModel {
             let dual_bound = *self.global_dual_bound.read().unwrap();
             let gap = primal_bound - dual_bound;
             let rel_gap = gap / primal_bound;
-            // self.controls.iter().for_each(|c| *c.write().unwrap() = true);
-            let primal_bound = match primal_bound {
-                f if f > 1000000000000.0 => "inf".to_string(),
-                f => format!("{:.2}", f),
-            };
-            let dual_bound = match dual_bound {
-                f if f < -1000000000000.0 => "-inf".to_string(),
-                f => format!("{:.2}", f),
-            };
-            println!("{:.2}s | bounds: [{}, {}] | rel_gap: {:.2}%",
-                     self.ticks as f64 / 100.0,  dual_bound, primal_bound, rel_gap * 100.0);
+
+            if gap < prev_gap || self.ticks % 1000 == 0 {
+                let has_improvement = gap < prev_gap;
+                prev_gap = gap;
+                let primal_bound = match primal_bound {
+                    f if f > 1000000000000.0 => "inf".to_string(),
+                    f => format!("{:.2}", f),
+                };
+                let dual_bound = match dual_bound {
+                    f if f < -1000000000000.0 => "-inf".to_string(),
+                    f => format!("{:.2}", f),
+                };
+                let has_improvement = if has_improvement { "*" } else { "-" };
+                println!("{} {:.2}s | bounds: [{}, {}] | rel_gap: {:.2}%",
+                         has_improvement, self.ticks as f64 / 100.0, dual_bound, primal_bound, rel_gap * 100.0);
+            }
+
 
             if rel_gap < 1e-6 {
                 break;

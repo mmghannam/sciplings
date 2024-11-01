@@ -32,6 +32,8 @@ impl Solver {
 
 
     pub fn solve(&mut self, presets: Vec<Preset>) {
+        println!("Solving instance: {}", self.instance_path);
+        println!("Presets: {:?}", presets);
         for (i, preset) in presets.into_iter().enumerate() {
             let instance_path = self.instance_path.clone();
             let global_primal_bound = self.global_primal_bound.clone();
@@ -41,23 +43,23 @@ impl Solver {
             rayon::spawn(move || {
                 let mut model = russcip::Model::new()
                     .include_default_plugins()
-                    .read_prob(instance_path.as_str()).unwrap()
                     .hide_output()
+                    .read_prob(instance_path.as_str()).unwrap()
                     .set_int_param("randomization/permutationseed", i as i32).unwrap();
 
                 match preset.clone() {
                     Preset::HeuristicsFocus => {
                         unsafe {
                             let scip_ptr = model.scip_ptr();
-                            ffi::SCIPsetHeuristics(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 0);
-                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_FEASIBILITY, 0);
+                            ffi::SCIPsetHeuristics(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 1);
+                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_FEASIBILITY, 1);
                         }
                     }
                     Preset::SeparatingFocus => {
                         unsafe {
                             let scip_ptr = model.scip_ptr();
-                            ffi::SCIPsetSeparating(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 0);
-                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_OPTIMALITY, 0);
+                            ffi::SCIPsetSeparating(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 1);
+                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_OPTIMALITY, 1);
                         }
                     }
                     Preset::Default => {}

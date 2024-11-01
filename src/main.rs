@@ -4,7 +4,7 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 struct Args {
     instance_path: String,
-    #[clap(default_value = "d,h,s,p")]
+    #[clap(default_value = "def,heur,sep,pseu")]
     presets_input: Option<String>,
 }
 
@@ -12,11 +12,11 @@ fn parse_presets_input(input: String) -> Vec<Preset> {
     let mut presets = Vec::new();
     for preset in input.split(',') {
         match preset {
-            "h" => presets.push(Preset::HeuristicsFocus),
-            "s" => presets.push(Preset::SeparatingFocus),
-            "d" => presets.push(Preset::Default),
-            "p" => presets.push(Preset::PseudoCostBranching),
-            "wp" => presets.push(Preset::WithoutPresolving),
+            "heur" => presets.push(Preset::HeuristicsFocus),
+            "sep" => presets.push(Preset::SeparatingFocus),
+            "def" => presets.push(Preset::Default),
+            "pseu" => presets.push(Preset::PseudoCostBranching),
+            "nopr" => presets.push(Preset::WithoutPresolving),
             _ => panic!("Unknown preset: {}", preset),
         }
     }

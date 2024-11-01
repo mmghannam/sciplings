@@ -7,7 +7,7 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
 use scipling::Scipling;
-use russcip::ffi;
+use russcip::{ffi, ParamSetting};
 use russcip::HasScipPtr;
 
 pub struct Solver {
@@ -65,6 +65,9 @@ impl Solver {
                     Preset::Default => {}
                     Preset::PseudoCostBranching => {
                         model = model.set_int_param("branching/pscost/priority", 10000000).unwrap();
+                    }
+                    Preset::WithoutPresolving => {
+                        model = model.set_presolving(ParamSetting::Off);
                     }
                     Preset::SettingsFile(path) => {
                         todo!()

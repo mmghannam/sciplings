@@ -10,6 +10,8 @@ pub enum Preset {
     Default,
     /// Pseudo cost branching.
     PseudoCostBranching,
+    /// Without Presolving
+    WithoutPresolving,
     /// Load settings from a file.
     SettingsFile(String),
 }

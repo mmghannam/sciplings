@@ -16,6 +16,7 @@ fn parse_presets_input(input: String) -> Vec<Preset> {
             "s" => presets.push(Preset::SeparatingFocus),
             "d" => presets.push(Preset::Default),
             "p" => presets.push(Preset::PseudoCostBranching),
+            "wp" => presets.push(Preset::WithoutPresolving),
             _ => panic!("Unknown preset: {}", preset),
         }
     }

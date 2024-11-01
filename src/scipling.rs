@@ -32,7 +32,7 @@ impl Scipling {
 
 impl russcip::Eventhdlr for Scipling {
     fn get_type(&self) -> EventMask {
-        EventMask::LP_EVENT | EventMask::NODE_SOLVED
+        EventMask::LP_EVENT | EventMask::NODE_EVENT | EventMask::BEST_SOL_FOUND | EventMask::ROW_ADDED_LP
     }
 
     fn execute(&mut self) {

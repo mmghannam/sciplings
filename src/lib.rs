@@ -90,7 +90,7 @@ impl Solver {
             let primal_bound = *self.global_primal_bound.read().unwrap();
             let dual_bound = *self.global_dual_bound.read().unwrap();
             let gap = primal_bound - dual_bound;
-            let rel_gap = gap / primal_bound;
+            let rel_gap = gap / (primal_bound + 1e-9);
 
             if gap < prev_gap || self.ticks % 1000 == 0 {
                 let has_improvement = gap < prev_gap;

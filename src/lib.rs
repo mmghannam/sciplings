@@ -8,7 +8,7 @@ use std::thread;
 use std::time::Duration;
 use scipling::Scipling;
 use russcip::ffi;
-
+use russcip::HasScipPtr;
 
 pub struct Solver {
     ticks: usize,

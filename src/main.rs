@@ -1,10 +1,10 @@
 use sciplings::{Preset, Solver};
-use clap::{FromArgMatches, Parser};
+use clap::Parser;
 
 #[derive(Debug, Parser)]
 struct Args {
     instance_path: String,
-    #[clap(default_value = "d-h-s-p")]
+    #[clap(default_value = "d,h,s,p")]
     presets_input: Option<String>,
 }
 

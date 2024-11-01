@@ -1,9 +1,10 @@
-use std::sync::{Arc, Mutex, RwLock};
-use russcip::{EventMask, ffi, Solving, WithSolvingStats};
+use std::sync::{Arc, RwLock};
+use russcip::{EventMask, ffi, WithSolvingStats};
+use russcip::HasScipPtr;
 
 pub(crate) struct Scipling {
     id: usize,
-    model: russcip::Model<Solving>,
+    model: russcip::ModelSolving,
     primal_bound: Arc<RwLock<f64>>,
     dual_bound: Arc<RwLock<f64>>,
     should_run: Arc<RwLock<bool>>,
@@ -13,7 +14,7 @@ pub(crate) struct Scipling {
 impl Scipling {
     pub fn new(
         id: usize,
-        model: russcip::Model<Solving>,
+        model: russcip::ModelSolving,
         primal_bound: Arc<RwLock<f64>>,
         dual_bound: Arc<RwLock<f64>>,
         should_run: Arc<RwLock<bool>>,

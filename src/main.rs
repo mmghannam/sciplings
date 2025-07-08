@@ -1,5 +1,5 @@
-use sciplings::{Preset, Solver};
 use clap::Parser;
+use sciplings::{Preset, Solver};
 
 #[derive(Debug, Parser)]
 struct Args {

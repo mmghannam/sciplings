@@ -1,13 +1,13 @@
-pub mod scipling;
 pub mod presets;
+pub mod scipling;
 
 pub use presets::Preset;
 
+use russcip::{ffi, ParamSetting};
+use scipling::Scipling;
 use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
-use scipling::Scipling;
-use russcip::{ffi, ParamSetting};
 
 pub struct Solver {
     ticks: usize,
@@ -16,7 +16,6 @@ pub struct Solver {
     instance_path: String,
     controls: Vec<Arc<RwLock<bool>>>,
 }
-
 
 impl Solver {
     pub fn new(instance_path: String) -> Self {
@@ -28,7 +27,6 @@ impl Solver {
             controls: Vec::new(),
         }
     }
-
 
     pub fn solve(&mut self, presets: Vec<Preset>) {
         println!("Solving instance: {}", self.instance_path);
@@ -43,27 +41,43 @@ impl Solver {
                 let mut model = russcip::Model::new()
                     .include_default_plugins()
                     .hide_output()
-                    .read_prob(instance_path.as_str()).unwrap()
-                    .set_int_param("randomization/permutationseed", i as i32).unwrap();
+                    .read_prob(instance_path.as_str())
+                    .unwrap()
+                    .set_int_param("randomization/permutationseed", i as i32)
+                    .unwrap();
 
                 match preset.clone() {
-                    Preset::HeuristicsFocus => {
-                        unsafe {
-                            let scip_ptr = model.scip_ptr();
-                            ffi::SCIPsetHeuristics(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 1);
-                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_FEASIBILITY, 1);
-                        }
-                    }
-                    Preset::SeparatingFocus => {
-                        unsafe {
-                            let scip_ptr = model.scip_ptr();
-                            ffi::SCIPsetSeparating(scip_ptr, ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE, 1);
-                            ffi::SCIPsetEmphasis(scip_ptr, ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_OPTIMALITY, 1);
-                        }
-                    }
+                    Preset::HeuristicsFocus => unsafe {
+                        let scip_ptr = model.scip_ptr();
+                        ffi::SCIPsetHeuristics(
+                            scip_ptr,
+                            ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,
+                            1,
+                        );
+                        ffi::SCIPsetEmphasis(
+                            scip_ptr,
+                            ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_FEASIBILITY,
+                            1,
+                        );
+                    },
+                    Preset::SeparatingFocus => unsafe {
+                        let scip_ptr = model.scip_ptr();
+                        ffi::SCIPsetSeparating(
+                            scip_ptr,
+                            ffi::SCIP_ParamSetting_SCIP_PARAMSETTING_AGGRESSIVE,
+                            1,
+                        );
+                        ffi::SCIPsetEmphasis(
+                            scip_ptr,
+                            ffi::SCIP_ParamEmphasis_SCIP_PARAMEMPHASIS_OPTIMALITY,
+                            1,
+                        );
+                    },
                     Preset::Default => {}
                     Preset::PseudoCostBranching => {
-                        model = model.set_int_param("branching/pscost/priority", 10000000).unwrap();
+                        model = model
+                            .set_int_param("branching/pscost/priority", 10000000)
+                            .unwrap();
                     }
                     Preset::WithoutPresolving => {
                         model = model.set_presolving(ParamSetting::Off);
@@ -74,12 +88,13 @@ impl Solver {
                 }
 
                 let should_run = Arc::new(RwLock::new(true));
-                let scipling = Scipling::new(i, global_primal_bound.clone(), global_dual_bound, should_run);
-                model.include_eventhdlr(
-                    format!("Scipling{}", i).as_str(),
-                    "",
-                    Box::new(scipling),
+                let scipling = Scipling::new(
+                    i,
+                    global_primal_bound.clone(),
+                    global_dual_bound,
+                    should_run,
                 );
+                model.include_eventhdlr(format!("Scipling{}", i).as_str(), "", Box::new(scipling));
 
                 model.solve();
             });
@@ -108,10 +123,15 @@ impl Solver {
                     f => format!("{:.2}", f),
                 };
                 let has_improvement = if has_improvement { "*" } else { "-" };
-                println!("{} {:.2}s | bounds: [{}, {}] | rel_gap: {:.2}%",
-                         has_improvement, self.ticks as f64 / 100.0, dual_bound, primal_bound, rel_gap * 100.0);
+                println!(
+                    "{} {:.2}s | bounds: [{}, {}] | rel_gap: {:.2}%",
+                    has_improvement,
+                    self.ticks as f64 / 100.0,
+                    dual_bound,
+                    primal_bound,
+                    rel_gap * 100.0
+                );
             }
-
 
             if rel_gap < 1e-6 {
                 break;

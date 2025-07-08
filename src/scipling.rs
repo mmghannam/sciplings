@@ -1,5 +1,5 @@
+use russcip::{ffi, Event, EventMask, Model, SCIPEventhdlr, Solving, WithSolvingStats};
 use std::sync::{Arc, RwLock};
-use russcip::{EventMask, ffi, WithSolvingStats, Solving, Model, SCIPEventhdlr, Event};
 
 pub(crate) struct Scipling {
     id: usize,
@@ -7,7 +7,6 @@ pub(crate) struct Scipling {
     dual_bound: Arc<RwLock<f64>>,
     should_run: Arc<RwLock<bool>>,
 }
-
 
 impl Scipling {
     pub fn new(
@@ -25,7 +24,6 @@ impl Scipling {
     }
 }
 
-
 impl russcip::Eventhdlr for Scipling {
     fn get_type(&self) -> EventMask {
         EventMask::NODE_SOLVED
@@ -33,8 +31,8 @@ impl russcip::Eventhdlr for Scipling {
 
     fn execute(&mut self, model: Model<Solving>, _eventhdlr: SCIPEventhdlr, _event: Event) {
         // if *self.should_run.read().unwrap() {
-            // println!("running scipling {}", self.id);
-            // return;
+        // println!("running scipling {}", self.id);
+        // return;
         // }
 
         let new_primal = model.obj_val();
@@ -48,7 +46,6 @@ impl russcip::Eventhdlr for Scipling {
             }
         }
 
-
         let new_dual = model.best_bound();
         if new_dual > *self.dual_bound.read().unwrap() {
             self.dual_bound.write().unwrap().clone_from(&new_dual);
@@ -57,5 +54,3 @@ impl russcip::Eventhdlr for Scipling {
         // self.should_run.write().unwrap().clone_from(&true);
     }
 }
-
-

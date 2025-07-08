@@ -8,7 +8,6 @@ use std::thread;
 use std::time::Duration;
 use scipling::Scipling;
 use russcip::{ffi, ParamSetting};
-use russcip::HasScipPtr;
 
 pub struct Solver {
     ticks: usize,
@@ -75,12 +74,14 @@ impl Solver {
                 }
 
                 let should_run = Arc::new(RwLock::new(true));
-                let scipling = Scipling::new(i, model.clone_for_plugins(), global_primal_bound.clone(), global_dual_bound, should_run);
+                let scipling = Scipling::new(i, global_primal_bound.clone(), global_dual_bound, should_run);
                 model.include_eventhdlr(
                     format!("Scipling{}", i).as_str(),
                     "",
                     Box::new(scipling),
-                ).solve();
+                );
+
+                model.solve();
             });
         }
 

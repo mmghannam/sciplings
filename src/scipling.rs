@@ -1,10 +1,8 @@
 use std::sync::{Arc, RwLock};
-use russcip::{EventMask, ffi, WithSolvingStats};
-use russcip::HasScipPtr;
+use russcip::{EventMask, ffi, WithSolvingStats, Solving, Model, SCIPEventhdlr, Event};
 
 pub(crate) struct Scipling {
     id: usize,
-    model: russcip::ModelSolving,
     primal_bound: Arc<RwLock<f64>>,
     dual_bound: Arc<RwLock<f64>>,
     should_run: Arc<RwLock<bool>>,
@@ -14,14 +12,12 @@ pub(crate) struct Scipling {
 impl Scipling {
     pub fn new(
         id: usize,
-        model: russcip::ModelSolving,
         primal_bound: Arc<RwLock<f64>>,
         dual_bound: Arc<RwLock<f64>>,
         should_run: Arc<RwLock<bool>>,
     ) -> Self {
         Scipling {
             id,
-            model,
             primal_bound,
             dual_bound,
             should_run,
@@ -32,28 +28,28 @@ impl Scipling {
 
 impl russcip::Eventhdlr for Scipling {
     fn get_type(&self) -> EventMask {
-        EventMask::LP_EVENT | EventMask::NODE_EVENT | EventMask::BEST_SOL_FOUND | EventMask::ROW_ADDED_LP
+        EventMask::NODE_SOLVED
     }
 
-    fn execute(&mut self) {
+    fn execute(&mut self, model: Model<Solving>, _eventhdlr: SCIPEventhdlr, _event: Event) {
         // if *self.should_run.read().unwrap() {
             // println!("running scipling {}", self.id);
             // return;
         // }
 
-        let new_primal = self.model.obj_val();
+        let new_primal = model.obj_val();
         // println!("Scipling {} bound: {}", self.id, new_bound);
         if new_primal < *self.primal_bound.read().unwrap() {
             self.primal_bound.write().unwrap().clone_from(&new_primal);
         } else if new_primal > *self.primal_bound.read().unwrap() {
             unsafe {
-                let scip_ptr = self.model.scip_ptr();
+                let scip_ptr = model.scip_ptr();
                 ffi::SCIPsetObjlimit(scip_ptr, new_primal);
             }
         }
 
 
-        let new_dual = self.model.best_bound();
+        let new_dual = model.best_bound();
         if new_dual > *self.dual_bound.read().unwrap() {
             self.dual_bound.write().unwrap().clone_from(&new_dual);
         }
